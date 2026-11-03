@@ -15,7 +15,6 @@ meshes/*.STL              visual meshes (binary STL, metres), shared by URDF and
 imu_mount.json            IMU position / orientation on the body, as measured on the robot
 scripts/view_static.py    model summary + viewer with frozen physics: pose the robot with sliders
 scripts/pd_stand.py       PD controller holding a fixed pose, with pushes and a report
-scripts/check_models.py   checks that URDF, MJCF, scene and IMU record agree (for maintainers)
 ```
 
 ## Quick start
