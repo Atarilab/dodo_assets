@@ -19,15 +19,23 @@ scripts/pd_stand.py       PD controller holding a fixed pose, with pushes and a 
 
 ## Quick start
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first, then
+create a virtual environment and install MuJoCo:
+
 ```bash
 git clone git@github.com:Atarilab/dodo_assets.git
 cd dodo_assets
-pip install mujoco                      # brings numpy; tested with MuJoCo 3.10, Python 3.13
+uv venv --python 3.13
+source .venv/bin/activate
+uv pip install mujoco                   # brings numpy; tested with MuJoCo 3.10, Python 3.13
 
 python3 scripts/view_static.py          # print the model summary, then pose the robot by hand
 python3 scripts/pd_stand.py             # watch the robot stand under PD control
 python3 -m mujoco.viewer --mjcf mjcf/scene.xml   # plain MuJoCo viewer
 ```
+
+Run `source .venv/bin/activate` from the repository in each new terminal before
+running the scripts below.
 
 On macOS, run `pd_stand.py` with `mjpython` instead of `python3` (MuJoCo's passive viewer needs it).
 
