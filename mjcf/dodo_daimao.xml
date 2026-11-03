@@ -1,0 +1,201 @@
+<mujoco model="dodo_daimao">
+
+  <!--
+    Dodo biped (dodo_daimao), MJCF equivalent of ../urdf/dodo_daimao.urdf.
+
+    Same kinematic tree, link/joint names, inertials, joint axes, ranges, damping,
+    effort limits and collision boxes as the URDF; every number is copied from it.
+    `python3 scripts/check_models.py` (from the repo root) compiles both files
+    with MuJoCo and compares them, plus the IMU against ../imu_mount.json. Run it
+    after any edit to either model (imu_locate.py regenerates only the URDF's IMU
+    block).
+
+    Additions relative to the URDF, all deliberate:
+      * freejoint "floating_base_joint" on "body" (MuJoCo imports a URDF as
+        fixed-base).
+      * visual meshes (group 2) - MuJoCo's URDF import discards <visual>.
+      * collision geoms are named "<link>_collision" (group 3).
+      * site "imu" in imu_link plus gyro / accelerometer / framequat sensors.
+        imu_link carries the chip's own axes, so the sensors read in the chip
+        frame like the real BHI260AP; v_body = AXIS_REMAP v_chip
+        (imu_mount.json "axis_remap" = imu_link's rotation in body).
+    Not representable: the URDF velocity limit (6 rad/s on every joint).
+
+    Not part of the robot description, so set by whoever simulates it (as in the
+    URDF): actuators, PD gains and motor armature (reflected rotor inertia; 0
+    here, like a URDF imported into MuJoCo). scene.xml sets all three for
+    standalone use; mjlab and similar frameworks set them in their actuator
+    config. Joint armature is deliberately not written below, so that a file
+    including this one can set it through a <default> placed before the
+    <include> (scene.xml does).
+
+    Frames: "body" is x forward, y left, z up, origin on the hip-pitch axis
+    midway between the legs. All joints at 0 = legs straight down, sole bottoms
+    0.4468 m below the body origin.
+
+    Contact: each foot_sole_*_collision box lies inside its foot_*_collision box,
+    whose bottom is 0.7 mm lower, so ground contacts land on foot_*_collision
+    (same as in the URDF).
+  -->
+
+  <compiler angle="radian" meshdir="../meshes" autolimits="true"/>
+
+  <default>
+    <default class="dodo">
+      <joint damping="0.01" frictionloss="0"/>
+      <!-- URDF joint groups, same for left and right. -->
+      <default class="hip">
+        <joint axis="1 0 0" range="-0.35 0.35" actuatorfrcrange="-27 27"/>
+      </default>
+      <default class="upper_leg">
+        <joint axis="0 1 0" range="-1.57 1.57" actuatorfrcrange="-27 27"/>
+      </default>
+      <default class="lower_leg">
+        <joint axis="0 1 0" range="-3.1416 1.3963" actuatorfrcrange="-9 9"/>
+      </default>
+      <default class="foot">
+        <joint axis="0 1 0" range="-1.05 1.57" actuatorfrcrange="-9 9"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" density="0"/>
+      </default>
+      <default class="collision">
+        <geom type="box" group="3" rgba="0.9 0.4 0.3 0.4"/>
+      </default>
+      <site group="5" rgba="1 0 0 1"/>
+    </default>
+  </default>
+
+  <asset>
+    <!-- URDF material names and colours. -->
+    <material name="body_mat" rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/>
+    <material name="hip_r_mat" rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+    <material name="upper_leg_r_mat" rgba="0.79216 0.81961 0.93333 1"/>
+    <material name="lower_leg_r_mat" rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/>
+    <material name="foot_r_mat" rgba="0.79216 0.81961 0.93333 1"/>
+    <material name="sole_r_mat" rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+    <material name="hip_l_mat" rgba="1 1 1 1"/>
+    <material name="upper_leg_l_mat" rgba="0.298039215686275 0.298039215686275 0.298039215686275 1"/>
+    <material name="lower_leg_l_mat" rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/>
+    <material name="foot_l_mat" rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+    <material name="sole_l_mat" rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+
+    <mesh name="body" file="body.STL"/>
+    <mesh name="hip_right" file="hip_right.STL"/>
+    <mesh name="upper_leg_right" file="upper_leg_right.STL"/>
+    <mesh name="lower_leg_right" file="lower_leg_right.STL"/>
+    <mesh name="foot_right" file="foot_right.STL"/>
+    <mesh name="foot_sole_right" file="foot_sole_right.STL"/>
+    <mesh name="hip_left" file="hip_left.STL"/>
+    <mesh name="upper_leg_left" file="upper_leg_left.STL"/>
+    <mesh name="lower_leg_left" file="lower_leg_left.STL"/>
+    <mesh name="foot_left" file="foot_left.STL"/>
+    <mesh name="foot_sole_left" file="foot_sole_left.STL"/>
+  </asset>
+
+  <!-- fullinertia order: ixx iyy izz ixy ixz iyz. -->
+  <worldbody>
+    <body name="body" pos="0 0 0.4468" childclass="dodo">
+      <freejoint name="floating_base_joint"/>
+      <inertial pos="0.0400134174279834 0.000424958598850349 0.084703437184713" mass="3.3120339029656"
+        fullinertia="0.0036507107824554 0.00301790394894704 0.00531086312471364 1.13776918820647E-05 1.24774298068495E-06 -7.64189428427699E-08"/>
+      <geom class="visual" mesh="body" material="body_mat"/>
+      <geom name="body_collision" class="collision" pos="0.02 0 0.095" size="0.135 0.105 0.05"/>
+
+      <!-- IMU: Arduino Nicla Sense ME (Bosch BHI260AP), from ../imu_mount.json.
+           quat = rpy (pi, 0, pi/2) = axis_remap [[0,1,0],[1,0,0],[0,0,-1]]. -->
+      <body name="imu_link" pos="0.0142 0 0.095" quat="0 0.7071067811865476 0.7071067811865476 0">
+        <inertial pos="0 0 0" mass="0.005" diaginertia="2.308e-07 2.308e-07 4.408e-07"/>
+        <site name="imu" type="box" size="0.0115 0.0115 0.0025"/>
+      </body>
+
+      <!-- Right leg -->
+      <body name="hip_right" pos="-0.00075001 -0.093876 0">
+        <inertial pos="-0.00935959180540419 -0.0120580540612954 -4.61678384464537E-05" mass="0.428645410212592"
+          fullinertia="0.000176489626110945 0.00018242553146269 0.000179181141560814 4.21107338219603E-06 -1.16971532582114E-07 4.30374159940254E-08"/>
+        <joint name="hip_right" class="hip"/>
+        <geom class="visual" mesh="hip_right" material="hip_r_mat"/>
+        <geom name="hip_right_collision" class="collision" pos="-0.035 -0.012 0" size="0.075 0.04 0.0325"/>
+
+        <body name="upper_leg_right" pos="0 -0.0515 0">
+          <inertial pos="0.00051642 8.2938E-05 -0.038008" mass="0.13997"
+            fullinertia="0.00021774 0.00023578 2.1634E-05 -5.1776E-08 1.6121E-05 -3.3175E-07"/>
+          <joint name="upper_leg_right" class="upper_leg"/>
+          <geom class="visual" mesh="upper_leg_right" material="upper_leg_r_mat"/>
+          <geom name="upper_leg_right_collision" class="collision" pos="0.005 -0.0165 -0.1" size="0.0325 0.0175 0.1175"/>
+
+          <body name="lower_leg_right" pos="0.02 0 -0.199">
+            <inertial pos="-0.01587610149621 -0.00929187493498879 -0.074124892377313" mass="0.0729947991135356"
+              fullinertia="0.000132637231144206 0.000142573634138813 1.25647330319124E-05 9.3747479049776E-08 -4.3643145747824E-06 1.01124749060663E-06"/>
+            <joint name="lower_leg_right" class="lower_leg"/>
+            <geom class="visual" mesh="lower_leg_right" material="lower_leg_r_mat"/>
+            <geom name="lower_leg_right_collision" class="collision" pos="-0.018 -0.0185 -0.1" size="0.023 0.0185 0.115"/>
+
+            <body name="foot_right" pos="-0.02 0 -0.199">
+              <inertial pos="0.0094579 -0.0031616 -0.017361" mass="0.035804"
+                fullinertia="7.6539E-06 2.1846E-05 1.9541E-05 1.2526E-06 1.2845E-06 -1.281E-06"/>
+              <joint name="foot_right" class="foot"/>
+              <geom class="visual" mesh="foot_right" material="foot_r_mat"/>
+              <geom name="foot_right_collision" class="collision" pos="0.014 -0.005 -0.016" size="0.0475 0.017 0.03275"/>
+
+              <body name="foot_sole_right" pos="0.01367 -0.0045502 -0.048801">
+                <inertial pos="-1.73472347597681E-17 0 0.00567169872058571" mass="0.0250241854392981"
+                  fullinertia="1.87120561716279E-06 1.90049094994832E-05 2.05068417159572E-05 -6.24808815328255E-22 2.90222075573319E-21 -3.78307469549735E-22"/>
+                <geom class="visual" mesh="foot_sole_right" material="sole_r_mat"/>
+                <geom name="foot_sole_right_collision" class="collision" pos="0 0 0.0032" size="0.0475 0.011 0.0025"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <!-- Left leg -->
+      <body name="hip_left" pos="-0.00075 0.093876 0">
+        <inertial pos="-0.00935959180540419 0.0120580540612954 -4.61678384464537E-05" mass="0.428645410212592"
+          fullinertia="0.000176489626110945 0.00018242553146269 0.000179181141560814 -4.21107338219603E-06 -1.16971532582114E-07 -4.30374159940254E-08"/>
+        <joint name="hip_left" class="hip"/>
+        <geom class="visual" mesh="hip_left" material="hip_l_mat"/>
+        <geom name="hip_left_collision" class="collision" pos="-0.035 0.012 0" size="0.075 0.04 0.0325"/>
+
+        <body name="upper_leg_left" pos="0 0.0515 0">
+          <inertial pos="0.000470359983009524 -0.000104870920080047 -0.0379958460267216" mass="0.13997"
+            fullinertia="0.000217276164901289 0.00023534518749094 2.16682097797681E-05 4.47992885118014E-08 1.65357655457004E-05 3.29205860644562E-07"/>
+          <joint name="upper_leg_left" class="upper_leg"/>
+          <geom class="visual" mesh="upper_leg_left" material="upper_leg_l_mat"/>
+          <geom name="upper_leg_left_collision" class="collision" pos="0.005 0.0165 -0.1" size="0.0325 0.0175 0.1175"/>
+
+          <body name="lower_leg_left" pos="0.02 0 -0.199">
+            <inertial pos="-0.0159332626475034 0.00934367799883778 -0.0741182203680711" mass="0.0729947991135356"
+              fullinertia="0.000132603326187729 0.000142575081640039 1.26000800700448E-05 -9.8027554728474E-08 -4.28769146205699E-06 -1.01217163604183E-06"/>
+            <joint name="lower_leg_left" class="lower_leg"/>
+            <geom class="visual" mesh="lower_leg_left" material="lower_leg_l_mat"/>
+            <geom name="lower_leg_left_collision" class="collision" pos="-0.018 0.0185 -0.1" size="0.023 0.0185 0.115"/>
+
+            <body name="foot_left" pos="-0.02 0 -0.199">
+              <inertial pos="0.0094578881133146 0.00323178176396433 -0.0173612508209276" mass="0.035804"
+                fullinertia="7.65386250473635E-06 2.18460376730125E-05 1.95413933051716E-05 -1.25259932554362E-06 1.28450131584467E-06 1.28101667369989E-06"/>
+              <joint name="foot_left" class="foot"/>
+              <geom class="visual" mesh="foot_left" material="foot_l_mat"/>
+              <geom name="foot_left_collision" class="collision" pos="0.014 0.005 -0.016" size="0.0475 0.017 0.03275"/>
+
+              <body name="foot_sole_left" pos="0.0136701751849855 0.00459982071533604 -0.0488007300265155">
+                <inertial pos="-1.04083408558608E-17 2.77555756156289E-17 0.00567169872058565" mass="0.0250241854392981"
+                  fullinertia="1.87123587595229E-06 1.90048792406936E-05 2.05068417159572E-05 2.27693702921507E-08 1.54018273619599E-22 -2.17461054031225E-22"/>
+                <geom class="visual" mesh="foot_sole_left" material="sole_l_mat"/>
+                <geom name="foot_sole_left_collision" class="collision" pos="0 0 0.0032" size="0.0475 0.011 0.0025"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Chip-frame readings (see header). -->
+  <sensor>
+    <gyro name="imu_gyro" site="imu"/>
+    <accelerometer name="imu_acc" site="imu"/>
+    <framequat name="imu_quat" objtype="site" objname="imu"/>
+  </sensor>
+
+</mujoco>

@@ -13,6 +13,9 @@
     sole bottoms 0.447 m below that origin.
 
     2026-10-30: added the <mujoco> block below. See ../README.md.
+    2026-11-03: ../mjcf/dodo_daimao.xml is the MJCF equivalent of this file;
+    `python3 scripts/check_models.py` checks that the two (and ../imu_mount.json)
+    agree. Keep them in sync when editing either.
   -->
 
   <mujoco>

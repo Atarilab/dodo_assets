@@ -1,0 +1,97 @@
+<mujoco model="dodo_daimao scene">
+
+  <!-- Standalone scene around dodo_daimao.xml: floor, light, motor armature,
+       joint-position (PD) actuators and keyframes. This is the file to open in
+       the MuJoCo viewer. It opens with the legs straight (qpos0); load key
+       "home" in the Simulation panel for the bent-leg standing pose.
+
+       Everything below is a simulation choice, not robot data (the URDF has no
+       actuator model). Values were chosen so that the PD controller alone holds
+       the robot upright in both keyframes (scripts/pd_stand.py); a policy has
+       to do the actual balancing. -->
+
+  <default>
+    <!-- Motor armature (reflected rotor inertia) for every robot joint. This
+         <default> must precede the <include> to reach the robot's joints.
+         0.005 kg m^2 is a PLACEHOLDER of the order of a Unitree Go1 hip motor;
+         replace it with rotor inertia x gear ratio^2 from the Dodo motors'
+         datasheets. Some armature is needed: with none, the feet (~5e-5 kg m^2
+         about the ankle) are so light that the foot contacts chatter and the
+         robot rocks off its feet under PD control. -->
+    <joint armature="0.005"/>
+
+    <!-- PD actuators: force = kp (ctrl - q) - kv qdot, ctrl = joint target
+         [rad], ctrlrange = joint range; the force is clamped by the joints'
+         actuatorfrcrange (URDF effort limits, 27 / 9 Nm). For reference, the
+         Genesis training setup this URDF comes from
+         (liambansbach/legged-robot_rl_genesis, robot_gym/envs/dodo/dodo_config.py)
+         uses kp 35/35/12/14, kd = 0.5 sqrt(kp) and Genesis' default armature of
+         0.1 for every joint; those gains are too soft to stand without a policy. -->
+    <default class="pd_hip">
+      <position kp="150" kv="1.5" ctrlrange="-0.35 0.35"/>
+    </default>
+    <default class="pd_upper_leg">
+      <position kp="150" kv="1.5" ctrlrange="-1.57 1.57"/>
+    </default>
+    <default class="pd_lower_leg">
+      <position kp="50" kv="0.8" ctrlrange="-3.1416 1.3963"/>
+    </default>
+    <default class="pd_foot">
+      <position kp="50" kv="0.8" ctrlrange="-1.05 1.57"/>
+    </default>
+  </default>
+
+  <include file="dodo_daimao.xml"/>
+
+  <!-- implicitfast integrates the actuators' kv term implicitly. -->
+  <option timestep="0.002" integrator="implicitfast"/>
+
+  <statistic center="0 0 0.25" extent="0.8"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="150" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+  </worldbody>
+
+  <!-- Order = URDF joint order (= controller_joint_names of the SolidWorks
+       export) = the order of the 8 joint entries in qpos. -->
+  <actuator>
+    <position name="hip_right" joint="hip_right" class="pd_hip"/>
+    <position name="upper_leg_right" joint="upper_leg_right" class="pd_upper_leg"/>
+    <position name="lower_leg_right" joint="lower_leg_right" class="pd_lower_leg"/>
+    <position name="foot_right" joint="foot_right" class="pd_foot"/>
+    <position name="hip_left" joint="hip_left" class="pd_hip"/>
+    <position name="upper_leg_left" joint="upper_leg_left" class="pd_upper_leg"/>
+    <position name="lower_leg_left" joint="lower_leg_left" class="pd_lower_leg"/>
+    <position name="foot_left" joint="foot_left" class="pd_foot"/>
+  </actuator>
+
+  <!-- qpos = base xyz, base quat (w x y z), then the 8 joints in actuator order.
+       ctrl = the same joint angles, so the PD targets hold the pose. Base
+       heights put the foot boxes on the floor (0.1 mm clearance or less). -->
+  <keyframe>
+    <!-- Bent-leg standing pose (Genesis default_joint_angles); hip pitch + knee
+         + ankle = 0, so the feet stay parallel to the body. -->
+    <key name="home"
+      qpos="0 0 0.4168 1 0 0 0  0 0.45 -1.0 0.55  0 0.45 -1.0 0.55"
+      ctrl="0 0.45 -1.0 0.55  0 0.45 -1.0 0.55"/>
+    <!-- All joints zero: legs straight down, the URDF's zero configuration. -->
+    <key name="straight"
+      qpos="0 0 0.4468 1 0 0 0  0 0 0 0  0 0 0 0"
+      ctrl="0 0 0 0  0 0 0 0"/>
+  </keyframe>
+
+</mujoco>
