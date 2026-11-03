@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+__MACOSX/
+.DS_Store
+MUJOCO_LOG.TXT
