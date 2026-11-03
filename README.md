@@ -192,22 +192,6 @@ Expected results:
 * The Genesis training gains are too soft to stand on their own.
 * Without armature, the feet chatter and the robot falls even with the default gains.
 
-### `scripts/check_models.py`: keep the models consistent
-
-Compiles the URDF and the MJCF with MuJoCo and compares them body by body:
-
-* tree, poses, masses, inertia tensors;
-* joints: axis, range, damping, friction, armature, effort limit;
-* collision boxes, visual meshes and colours.
-
-It also checks the IMU frame against `imu_mount.json`, and `scene.xml`'s armature,
-actuators (order, ranges, effort limits, left/right gains) and keyframes (joint
-limits, symmetry, feet on the floor). It exits non-zero on any mismatch.
-
-Run it after every model change. In particular, re-running `imu_locate.py` updates
-only the URDF, so `imu_link`'s `pos` / `quat` and the `imu` site size in the MJCF
-must then be updated by hand.
-
 ## IMU
 
 An Arduino Nicla Sense ME (Bosch BHI260AP) sits on the body at
@@ -249,11 +233,3 @@ measures the reaction to gravity, not gravity itself.
   (0.01) and zero friction from the export, not from measurements. Randomise
   mass, friction, gains, armature and latency during training.
 
-## Provenance
-
-* SolidWorks URDF export and meshes: liambansbach/legged-robot_rl_genesis @
-  `1cfa733` (`ressources/robots/dodo_daimao/`). The Isaac Sim USD of the robot
-  lives there too and is not included here.
-* IMU mount: measured on the robot on 2026-11-02 (`imu_mount.json`).
-* MJCF, scene and scripts: written for this repository. `check_models.py` keeps
-  them consistent with the URDF.
