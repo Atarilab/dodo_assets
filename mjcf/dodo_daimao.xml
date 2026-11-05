@@ -7,8 +7,9 @@
     effort limits and collision boxes as the URDF; every number is copied from it.
     `python3 scripts/check_models.py` (from the repo root) compiles both files
     with MuJoCo and compares them, plus the IMU against ../imu_mount.json. Run it
-    after any edit to either model (imu_locate.py regenerates only the URDF's IMU
-    block).
+    after any edit to either model. The IMU blocks of both (between the
+    BEGIN/END imu_locate.py markers) are generated from ../imu_mount.json by
+    imu_locate.py in dodo_rl_hardware_S26: don't edit them by hand.
 
     Additions relative to the URDF, all deliberate:
       * freejoint "floating_base_joint" on "body" (MuJoCo imports a URDF as
@@ -102,12 +103,16 @@
       <geom class="visual" mesh="body" material="body_mat"/>
       <geom name="body_collision" class="collision" pos="0.02 0 0.095" size="0.135 0.105 0.05"/>
 
-      <!-- IMU: Arduino Nicla Sense ME (Bosch BHI260AP), from ../imu_mount.json.
-           quat = rpy (pi, 0, pi/2) = axis_remap [[0,1,0],[1,0,0],[0,0,-1]]. -->
-      <body name="imu_link" pos="0.0142 0 0.095" quat="0 0.7071067811865476 0.7071067811865476 0">
+      <!-- BEGIN imu_locate.py: generated from ../imu_mount.json. Edit the record and run
+           `python3 imu_locate.py apply` (dodo_rl_hardware_S26), not this block.
+           IMU: Arduino Nicla Sense ME (Bosch BHI260AP). imu_link carries the
+           chip's own axes; its rotation in body is the record's axis_remap
+           (chip +x -> left (3.0 deg off), chip +y -> forward (4.0 deg off), chip +z -> down (4.4 deg off)). -->
+      <body name="imu_link" pos="0.0142 0 0.095" quat="0.0380814318407212 -0.6963772318868658 -0.7166311770511101 0.006950650105363866">
         <inertial pos="0 0 0" mass="0.005" diaginertia="2.308e-07 2.308e-07 4.408e-07"/>
         <site name="imu" type="box" size="0.0115 0.0115 0.0025"/>
       </body>
+      <!-- END imu_locate.py -->
 
       <!-- Right leg -->
       <body name="hip_right" pos="-0.00075001 -0.093876 0">
