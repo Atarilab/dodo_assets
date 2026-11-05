@@ -428,7 +428,7 @@
   </joint>
 
   <!-- BEGIN imu_locate.py: generated from ../imu_mount.json. Edit the record and run
-       `python3 imu_locate.py apply`, not this block. -->
+       `python3 imu_locate.py apply` (dodo_rl_hardware_S26), not this block. -->
   <!-- IMU: Arduino Nicla Sense ME (Bosch BHI260AP). imu_link's axes are the
        chip's own axes; the joint rotation equals imu_protocol.AXIS_REMAP
        (v_body = R v_imu). Its inertial is board + mount, a few grams. -->
@@ -441,7 +441,7 @@
   </link>
 
   <joint name="imu_joint" type="fixed">
-    <origin xyz="0.0142 0 0.095" rpy="3.141592654 0 1.570796327" />
+    <origin xyz="0.0142 0 0.095" rpy="-3.078486987 -0.044915234 1.598044286" />
     <parent link="body" />
     <child link="imu_link" />
   </joint>
